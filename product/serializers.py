@@ -1,5 +1,19 @@
 from rest_framework import serializers
-from product.models import Product, ProductImage
+from product.models import Product, ProductImage, Category
+from user.models import CustomUser
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ('id', 'name', 'parent')
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.children.exists():
+            representation['children'] = CategorySerializer(instance=instance.children.all(), many=True).data
+
+        return representation
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -8,6 +22,8 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    # user = serializers.ReadOnlyField(source=CustomUser.username)
+    category = CategorySerializer(many=False, read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
 
     class Meta:
