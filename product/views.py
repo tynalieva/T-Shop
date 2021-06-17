@@ -3,6 +3,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from product.models import Product, Category
 from product.serializers import ProductSerializer, CategorySerializer
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -16,6 +17,8 @@ class PostList(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['category', ]
 
 
 class PostDetail(generics.RetrieveUpdateDestroyAPIView):
