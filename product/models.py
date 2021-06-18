@@ -32,7 +32,6 @@ class Product(DataABC):
     description = models.TextField()
     quantity = models.PositiveIntegerField(default=0)
     available = models.BooleanField(default=False)
-    image = models.ImageField(upload_to='images/', blank=True)
     user = models.ForeignKey(CustomUser, related_name='products', on_delete=models.CASCADE, null=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', null=True)
 
@@ -40,8 +39,30 @@ class Product(DataABC):
 class ProductImage(models.Model):
     title = models.CharField(max_length=200, blank=True, null=True)
     image = models.ImageField(upload_to='images/')
-    post = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
 
     class Meta:
         verbose_name = 'image'
         verbose_name_plural = 'images'
+
+    @staticmethod
+    def generate_name():
+        import random
+        return "image" + str(random.randint(111111, 999999))
+
+    def save(self, *args, **kwargs):
+        self.title = self.generate_name()
+        return super(ProductImage, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.title} --> {self.product.id}'
+
+
+class Like(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='likes')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='likes')
+    likes_number = models.AutoField(primary_key=True)
+    like = models.BooleanField(default=False)
+
+    def str(self):
+        return f'{self.user} liked this movie--> {self.product}'
