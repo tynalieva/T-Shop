@@ -18,10 +18,6 @@ class RegisterApiSerializer(serializers.ModelSerializer):
         password2 = attrs.pop('password2')
         if attrs.get('password') != password2:
             raise serializers.ValidationError("Passwords did not match")
-        # if attrs.get('password').isalnum():
-        #     raise serializers.ValidationError("Password field must be contain alpha and num")
-        # if not attrs.get('password').iscapitalize():
-        #     raise serializers.ValidationError('')
         return attrs
 
     def create(self, validated_data):

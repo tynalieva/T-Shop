@@ -1,12 +1,10 @@
 from django.db.models import Q
-
-from rest_framework import generics, permissions, viewsets, status
+from rest_framework import generics, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from product.models import Product, Category, Like
-from product.serializers import ProductSerializer, CategorySerializer
+from product.models import Product, Category, Like, Feedback
+from product.permissions import IsOwnerOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
+from product import serializers
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -17,7 +15,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+    serializer_class = serializers.ProductSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend]
@@ -31,17 +29,37 @@ class ProductViewSet(viewsets.ModelViewSet):
                 Q(title__icontains=search) | Q(id__icontains=search) | Q(price__icontains=search))
         return queryset
 
-    @action(detail=True, methods=['post'])
-    def like(self, request, pk=None):
-        product = self.get_object()
-        obj, created = Like.objects.get_or_create(user=request.user.username, product=product)
-        if not created:
-            obj.like = not obj.like
-            obj.save()
-        liked_or_disliked = 'liked' if obj.like else 'disliked'
-        return Response('Successfully {} product'.format(liked_or_disliked), status=status.HTTP_200_OK)
+
+class FeedbackListCreateView(generics.ListCreateAPIView):
+    queryset = Feedback.objects.all()
+    serializer_class = serializers.FeedbackSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, )
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class FeedbackDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Feedback.objects.all()
+    serializer_class = serializers.FeedbackSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,)
+
+
+class LikeListCreateView(generics.ListCreateAPIView):
+    queryset = Like.objects.all()
+    serializer_class = serializers.FeedbackSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, )
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class LikeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Like.objects.all()
+    serializer_class = serializers.FeedbackSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,)
+
+
+class CategoryView(generics.ListAPIView):
     queryset = Category.objects.all()
-    serializer_class = CategorySerializer
+    serializer_class = serializers.CategorySerializer
