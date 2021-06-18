@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from product.models import Product, ProductImage, Category, Like
+from product.models import Product, ProductImage, Category, Like, Feedback
 from user.models import CustomUser
 
 
@@ -22,9 +22,11 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    # user = serializers.ReadOnlyField(source=CustomUser.username)
+    user = serializers.ReadOnlyField(source='user.username')
     category = CategorySerializer(many=False, read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
+    feedbacks = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    likes = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -40,12 +42,17 @@ class ProductSerializer(serializers.ModelSerializer):
         return product
 
 
+class FeedbackSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source='user.username')
+
+    class Meta:
+        model = Feedback
+        fields = '__all__'
+
+
 class LikeSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source='user.username')
+
     class Meta:
         model = Like
-        fields = ('user', )
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['user'] = instance.user.email
-        return representation
+        fields = '__all__'
