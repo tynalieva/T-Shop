@@ -6,13 +6,7 @@ from user.models import CustomUser
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ('id', 'name', 'parent')
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        if instance.children.exists():
-            representation['children'] = CategorySerializer(instance=instance.children.all(), many=True).data
-        return representation
+        fields = ('name',)
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -22,7 +16,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    user = serializers.ReadOnlyField(source='user.username')
+    user = serializers.ReadOnlyField(source='user.email')
     category = CategorySerializer(many=False, read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
     feedbacks = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
@@ -30,7 +24,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ('id', 'user', 'category', 'title', 'description', 'price', 'images', 'likes', 'feedbacks', 'created_at', 'updated_at')
 
     def create(self, validated_data):
         request = self.context.get('request')
@@ -43,15 +37,15 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class FeedbackSerializer(serializers.ModelSerializer):
-    user = serializers.ReadOnlyField(source='user.username')
+    user = serializers.ReadOnlyField(source='user.email')
 
     class Meta:
         model = Feedback
-        fields = '__all__'
+        fields = ('id', 'user', 'product', 'body')
 
 
 class LikeSerializer(serializers.ModelSerializer):
-    user = serializers.ReadOnlyField(source='user.username')
+    user = serializers.ReadOnlyField(source='user.email')
 
     class Meta:
         model = Like
